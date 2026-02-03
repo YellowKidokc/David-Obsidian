@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D1.2 Bit Definition &mdash; Theophysics Note Engine</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0e1117;
+      --surface:   #161b22;
+      --surface2:  #1c2129;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-dim:  #8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #1f6feb;
+      --green:     #3fb950;
+      --yellow:    #d29922;
+      --red:       #f85149;
+      --purple:    #bc8cff;
+      --orange:    #d18616;
+      --cyan:      #39d2c0;
+      --radius:    8px;
+      --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+    html { font-size: 15px; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ===== Layout: Left Sidebar ===== */
+    .sidebar-left {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar-left h3 {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .sidebar-left .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-left .logo span { font-size: 1.3rem; }
+    .nav-list { list-style: none; }
+    .nav-list li {
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: .87rem;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-list li:hover { background: var(--surface2); }
+    .nav-list li.active { background: var(--accent2); color: #fff; }
+    .nav-list li .chain-num {
+      font-size: .7rem;
+      color: var(--text-dim);
+      min-width: 26px;
+    }
+    .nav-list li.active .chain-num { color: rgba(255,255,255,.7); }
+    .nav-section { margin-bottom: 18px; }
+    .nav-divider { border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* ===== Layout: Main ===== */
+    .main {
+      flex: 1;
+      max-width: 900px;
+      padding: 32px 40px;
+      margin: 0 auto;
+      overflow-y: auto;
+    }
+
+    /* ===== Layout: Right Sidebar ===== */
+    .sidebar-right {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 16px 14px;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      font-size: .85rem;
+    }
+    .sidebar-right h4 {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+    .sidebar-right h4:first-child { margin-top: 0; }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-row .label { color: var(--text-dim); }
+    .meta-row .value { color: var(--text); font-weight: 500; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: .75rem;
+      font-weight: 500;
+      margin: 2px 3px 2px 0;
+    }
+    .tag-blue { background: rgba(88,166,255,.15); color: var(--accent); }
+    .tag-green { background: rgba(63,185,80,.15); color: var(--green); }
+    .tag-purple { background: rgba(188,140,255,.15); color: var(--purple); }
+    .tag-orange { background: rgba(209,134,22,.15); color: var(--orange); }
+    .tag-red { background: rgba(248,81,73,.15); color: var(--red); }
+    .mini-graph {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      height: 80px;
+      margin-top: 8px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      gap: 4px;
+    }
+    .mini-graph .bar {
+      flex: 1;
+      border-radius: 3px 3px 0 0;
+      min-height: 4px;
+      transition: height .3s;
+    }
+
+    /* ===== Breadcrumb ===== */
+    .breadcrumb {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* ===== Page Title ===== */
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .page-subtitle {
+      font-size: .9rem;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    /* ===== Quick Summary Card ===== */
+    .summary-card {
+      background: linear-gradient(135deg, rgba(88,166,255,.06), rgba(188,140,255,.06));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 20px;
+    }
+    .summary-card .sc-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .88rem;
+    }
+    .summary-card .sc-label {
+      color: var(--text-dim);
+      min-width: 70px;
+    }
+    .summary-card .sc-value { font-weight: 500; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .badge-green { background: rgba(63,185,80,.15); color: var(--green); }
+    .badge-blue { background: rgba(88,166,255,.15); color: var(--accent); }
+    .badge-yellow { background: rgba(210,153,34,.15); color: var(--yellow); }
+
+    /* ===== Section ===== */
+    .section {
+      margin-bottom: 28px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .section-icon {
+      font-size: 1.1rem;
+      width: 28px;
+      text-align: center;
+    }
+    .section-toggle {
+      margin-left: auto;
+      font-size: .75rem;
+      color: var(--text-dim);
+      transition: transform .2s;
+    }
+    .section-toggle.open { transform: rotate(90deg); }
+    .section-body { display: block; }
+    .section-body.collapsed { display: none; }
+
+    /* ===== Formal Statement ===== */
+    .formal-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: .92rem;
+      margin-bottom: 8px;
+    }
+    .formal-block .axiom-tag {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--purple);
+      margin-bottom: 6px;
+    }
+    .formal-block .def {
+      font-size: 1.05rem;
+      color: var(--cyan);
+    }
+    .formal-meta {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* ===== Assumes List ===== */
+    .assumes-list {
+      list-style: none;
+    }
+    .assumes-list li {
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      font-size: .88rem;
+      transition: background .15s;
+      cursor: pointer;
+    }
+    .assumes-list li:hover { background: rgba(88,166,255,.08); }
+    .assumes-list .check { color: var(--green); font-weight: 700; }
+    .assumes-list .ref {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: .8rem;
+    }
+
+    /* ===== Table ===== */
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .mapping-table th {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-dim);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .mapping-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .mapping-table tr:hover td { background: rgba(88,166,255,.04); }
+    .mapping-table .domain-icon { font-size: 1rem; margin-right: 6px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: .78rem;
+    }
+    .status-grounded { background: rgba(63,185,80,.12); color: var(--green); }
+    .status-scripture { background: rgba(188,140,255,.12); color: var(--purple); }
+    .status-suggest { background: rgba(210,153,34,.12); color: var(--yellow); }
+
+    /* ===== Forward Links ===== */
+    .link-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .link-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .link-card:hover { border-color: var(--accent); background: rgba(88,166,255,.04); }
+    .link-card .lc-ref {
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      color: var(--accent);
+    }
+    .link-card .lc-title {
+      font-size: .88rem;
+      margin-top: 2px;
+    }
+    .link-card .lc-type {
+      font-size: .72rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ===== Defeat Conditions ===== */
+    .defeat-list { list-style: none; }
+    .defeat-list li {
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .88rem;
+    }
+    .defeat-list .x-mark { color: var(--red); font-weight: 700; }
+    .defeat-status {
+      margin-left: auto;
+      font-size: .75rem;
+      color: var(--green);
+    }
+
+    /* ===== Physics / Math Layers ===== */
+    .layer-tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 0;
+    }
+    .layer-tab {
+      padding: 8px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+      cursor: pointer;
+      font-size: .82rem;
+      color: var(--text-dim);
+      transition: all .15s;
+    }
+    .layer-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+      font-weight: 600;
+    }
+    .layer-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0 var(--radius) var(--radius) var(--radius);
+      padding: 18px;
+    }
+    .layer-pane { display: none; }
+    .layer-pane.active { display: block; }
+    .equation-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+    }
+    .equation-block .eq-label {
+      font-size: .72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 6px;
+    }
+    .equation-block .eq-math {
+      font-size: 1.1rem;
+      color: var(--cyan);
+    }
+    .equation-block .eq-note {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    .equation-block .eq-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      font-size: .75rem;
+    }
+
+    /* ===== Objections ===== */
+    .objection-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .objection-header {
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .88rem;
+      transition: background .15s;
+    }
+    .objection-header:hover { background: rgba(248,81,73,.04); }
+    .objection-header .obj-num {
+      background: rgba(248,81,73,.12);
+      color: var(--red);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      font-weight: 700;
+    }
+    .objection-header .toggle-arrow {
+      margin-left: auto;
+      color: var(--text-dim);
+      font-size: .7rem;
+      transition: transform .2s;
+    }
+    .objection-header .toggle-arrow.open { transform: rotate(90deg); }
+    .objection-body {
+      padding: 0 14px 14px 48px;
+      font-size: .85rem;
+      color: var(--text-dim);
+      display: none;
+    }
+    .objection-body.open { display: block; }
+    .objection-body .resp-label {
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 4px;
+    }
+    .objection-body .ai-suggest {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(210,153,34,.06);
+      border-left: 2px solid var(--yellow);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: .82rem;
+      color: var(--yellow);
+    }
+
+    /* ===== Analytics ===== */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .analytics-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+    }
+    .analytics-card .a-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .analytics-card .a-label {
+      font-size: .72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-top: 2px;
+    }
+    .co-occurrence-list {
+      list-style: none;
+      font-size: .85rem;
+    }
+    .co-occurrence-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+    }
+    .co-occurrence-list .co-bar-wrap {
+      flex: 1;
+      background: var(--surface2);
+      border-radius: 3px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .co-occurrence-list .co-bar {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .co-occurrence-list .co-pct {
+      font-size: .78rem;
+      color: var(--text-dim);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ===== Action Buttons ===== */
+    .actions-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: .82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s;
+      font-family: var(--font-sans);
+    }
+    .action-btn:hover { border-color: var(--accent); background: rgba(88,166,255,.08); }
+    .action-btn.primary {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+    .action-btn.primary:hover { background: var(--accent); }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 680px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .modal h3 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      color: var(--text-dim);
+    }
+    .modal .result-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+    }
+    .modal .result-row:last-child { border-bottom: none; }
+    .modal .result-row .r-status { font-size: 1rem; }
+    .modal .result-row .r-eq { font-family: var(--font-mono); color: var(--cyan); flex: 1; }
+    .modal .result-row .r-check { font-size: .78rem; }
+
+    /* ===== Differences Section ===== */
+    .diff-section {
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 2px solid var(--border);
+    }
+    .diff-section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      color: var(--purple);
+    }
+    .diff-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+    .diff-item h3 {
+      font-size: .95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .diff-item h3 .diff-num {
+      background: var(--accent2);
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .diff-item p {
+      font-size: .86rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .diff-item .yours {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(63,185,80,.06);
+      border-left: 2px solid var(--green);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: .82rem;
+    }
+    .diff-item .mine {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(188,140,255,.06);
+      border-left: 2px solid var(--purple);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: .82rem;
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1200px) {
+      .sidebar-right { display: none; }
+    }
+    @media (max-width: 900px) {
+      .sidebar-left { display: none; }
+      .main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============ LEFT SIDEBAR ============ -->
+<aside class="sidebar-left">
+  <div class="logo"><span>&#x2699;</span> Theophysics Engine</div>
+
+  <div class="nav-section">
+    <h3>Spine &mdash; Axioms</h3>
+    <ul class="nav-list">
+      <li><span class="chain-num">001</span> A1.1 Existence</li>
+      <li><span class="chain-num">002</span> A1.2 Distinction</li>
+      <li><span class="chain-num">003</span> A1.3 Information Primacy</li>
+      <li><span class="chain-num">004</span> A1.4 Logical Precedence</li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <h3>Spine &mdash; Definitions</h3>
+    <ul class="nav-list">
+      <li class="active"><span class="chain-num">005</span> D1.2 Bit Definition</li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <h3>Spine &mdash; Lemmas</h3>
+    <ul class="nav-list">
+      <li><span class="chain-num">006</span> LN1.1 Matter-Energy</li>
+      <li><span class="chain-num">007</span> LN1.2 It-From-Bit</li>
+      <li><span class="chain-num">008</span> LN1.3 Holographic</li>
+      <li><span class="chain-num">009</span> LN1.4 Computational</li>
+    </ul>
+  </div>
+
+  <div class="nav-divider"></div>
+
+  <div class="nav-section">
+    <h3>Tools</h3>
+    <ul class="nav-list">
+      <li onclick="openModal('sim')">&#9881; Math Simulator</li>
+      <li onclick="openModal('struct')">&#9745; Structure Checker</li>
+      <li>&#128202; Analytics Dashboard</li>
+      <li>&#128269; Search Vault</li>
+    </ul>
+  </div>
+</aside>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="main">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="#">Master Index</a> &rsaquo;
+    <a href="#">Spine</a> &rsaquo;
+    <a href="#">Definitions</a> &rsaquo;
+    D1.2
+  </div>
+
+  <!-- Title -->
+  <h1 class="page-title">D1.2 &mdash; Bit Definition</h1>
+  <p class="page-subtitle">Chain Position: 5 of 188 &bull; Object Type: Axiom &bull; Category: Information Theory</p>
+
+  <!-- Actions -->
+  <div class="actions-bar">
+    <button class="action-btn primary" onclick="openModal('sim')">&#9881; Extract &amp; Simulate Math</button>
+    <button class="action-btn" onclick="openModal('struct')">&#9745; Check Structure</button>
+    <button class="action-btn" onclick="openModal('export')">&#128196; Export PDF</button>
+    <button class="action-btn">&#128260; Compare Versions</button>
+    <button class="action-btn">&#9998; Edit Source MD</button>
+  </div>
+
+  <!-- Quick Summary Card -->
+  <div class="summary-card">
+    <div class="sc-item">
+      <span class="sc-label">Formal:</span>
+      <span class="sc-value">Bit = minimal unit of distinction (binary choice)</span>
+    </div>
+    <div class="sc-item">
+      <span class="sc-label">Bridge:</span>
+      <span class="badge badge-green">7 / 10</span>
+      <span style="font-size:.78rem;color:var(--text-dim)">Auto-validated</span>
+    </div>
+    <div class="sc-item">
+      <span class="sc-label">Physics:</span>
+      <span class="sc-value">Observables / Contrast</span>
+    </div>
+    <div class="sc-item">
+      <span class="sc-label">Theology:</span>
+      <span class="sc-value">Genesis 1:4 (light/dark)</span>
+    </div>
+  </div>
+
+  <!-- ===== Formal Statement ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#128208;</span>
+      <h2>Formal Statement</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <div class="formal-block">
+        <div class="axiom-tag">Definition &bull; Stage 1</div>
+        <div class="def">Bit &equiv; min( distinction(binary) )</div>
+        <div class="formal-meta">Spine: Definition Stage 1 &bull; CR: Critical</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Assumes ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#128279;</span>
+      <h2>Assumes (3/3 Validated)</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <ul class="assumes-list">
+        <li>
+          <span class="check">&#10003;</span>
+          <span class="ref">A1.1</span>
+          <span>Existence</span>
+          <span class="badge badge-green" style="margin-left:auto;">Validated</span>
+        </li>
+        <li>
+          <span class="check">&#10003;</span>
+          <span class="ref">A1.2</span>
+          <span>Binary distinction</span>
+          <span class="badge badge-green" style="margin-left:auto;">Validated</span>
+        </li>
+        <li>
+          <span class="check">&#10003;</span>
+          <span class="ref">A1.3</span>
+          <span>Bit primacy (Information Primacy)</span>
+          <span class="badge badge-green" style="margin-left:auto;">Validated</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== Spine Master Mappings ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#128279;</span>
+      <h2>Spine Master Mappings</h2>
+      <span class="badge badge-blue" style="margin-left:8px;">Cross-Domain: 7/10</span>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <table class="mapping-table">
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>Mapping</th>
+            <th>Status</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="domain-icon">&#9883;</span> Physics</td>
+            <td>Observables / Contrast</td>
+            <td><span class="status-pill status-grounded">&#10003; Grounded</span></td>
+            <td>Bekenstein bound</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#10013;</span> Theology</td>
+            <td>Genesis 1 ordering</td>
+            <td><span class="status-pill status-scripture">&#10003; Scripture</span></td>
+            <td>Gen 1:1&ndash;4</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#129504;</span> Consciousness</td>
+            <td>Qualia</td>
+            <td><span class="status-pill status-suggest">&#128260; AI Suggest</span></td>
+            <td>Binary percept?</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#9883;</span> Quantum</td>
+            <td>Distinguishability</td>
+            <td><span class="status-pill status-grounded">&#10003; Eigenstates</span></td>
+            <td>QM formalism</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#128214;</span> Scripture</td>
+            <td>Gen 1:4 light/dark</td>
+            <td><span class="status-pill status-scripture">&#10003; Scripture</span></td>
+            <td>Genesis 1:4</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#128300;</span> Evidence</td>
+            <td>QM experiments</td>
+            <td><span class="status-pill status-grounded">&#10003; Empirical</span></td>
+            <td>Stern-Gerlach</td>
+          </tr>
+          <tr>
+            <td><span class="domain-icon">&#128190;</span> Information</td>
+            <td>Distinction = bit</td>
+            <td><span class="status-pill status-grounded">&#10003; Shannon</span></td>
+            <td>Shannon 1948</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;font-size:.8rem;color:var(--text-dim);">Logic Check: High coherence &bull; L3 AI2 validated</p>
+    </div>
+  </div>
+
+  <!-- ===== Enables (Forward Links) ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#10145;</span>
+      <h2>Enables (Forward Links: 6)</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <div class="link-cards">
+        <div class="link-card">
+          <div class="lc-ref">LN1.1</div>
+          <div class="lc-title">Matter-Energy Derivative</div>
+          <div class="lc-type">Lemma &bull; Matter-bits</div>
+        </div>
+        <div class="link-card">
+          <div class="lc-ref">LN1.2</div>
+          <div class="lc-title">It-From-Bit (Wheeler)</div>
+          <div class="lc-type">Lemma &bull; Wheeler principle</div>
+        </div>
+        <div class="link-card">
+          <div class="lc-ref">LN1.3</div>
+          <div class="lc-title">Holographic Bound</div>
+          <div class="lc-type">Lemma &bull; Auto-linked</div>
+        </div>
+        <div class="link-card">
+          <div class="lc-ref">LN1.4</div>
+          <div class="lc-title">Computational Irreducibility</div>
+          <div class="lc-type">Lemma &bull; Auto-linked</div>
+        </div>
+        <div class="link-card">
+          <div class="lc-ref">T2.1</div>
+          <div class="lc-title">Theorem: Finite Universe</div>
+          <div class="lc-type">Theorem &bull; Auto-linked</div>
+        </div>
+        <div class="link-card">
+          <div class="lc-ref">C3.1</div>
+          <div class="lc-title">Corollary: Discrete Spacetime</div>
+          <div class="lc-type">Corollary &bull; Auto-linked</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Defeat Conditions ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#10060;</span>
+      <h2>Defeat Conditions (Falsifiability)</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <ul class="defeat-list">
+        <li>
+          <span class="x-mark">&#10007;</span>
+          <span>Sub-bit information unit discovered</span>
+          <span class="defeat-status">No empirical defeat</span>
+        </li>
+        <li>
+          <span class="x-mark">&#10007;</span>
+          <span>Non-binary minimal distinction demonstrated</span>
+          <span class="defeat-status">No empirical defeat</span>
+        </li>
+        <li>
+          <span class="x-mark">&#10007;</span>
+          <span>Nats shown to be more fundamental than bits</span>
+          <span class="defeat-status">No empirical defeat</span>
+        </li>
+      </ul>
+      <p style="margin-top:8px;font-size:.8rem;color:var(--green);">AI Logic Check: All testable; no empirical defeat (L3 AI2 Validated)</p>
+    </div>
+  </div>
+
+  <!-- ===== Physics / Math Layers ===== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">&#128300;</span>
+      <h2>Physics &amp; Math Layers</h2>
+    </div>
+    <div class="layer-tabs">
+      <div class="layer-tab active" onclick="switchTab(this, 'physics')">Physics</div>
+      <div class="layer-tab" onclick="switchTab(this, 'math')">Math</div>
+      <div class="layer-tab" onclick="switchTab(this, 'combined')">Combined View</div>
+    </div>
+    <div class="layer-content">
+      <!-- Physics Pane -->
+      <div class="layer-pane active" id="pane-physics">
+        <div class="equation-block">
+          <div class="eq-label">Bekenstein Bound</div>
+          <div class="eq-math">N &le; A / (4 l<sub>P</sub><sup>2</sup> ln 2)</div>
+          <div class="eq-note">Maximum information (bits) in a region bounded by area A</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Dimensionally consistent &bull; Units: [bits] = [L<sup>2</sup>] / [L<sup>2</sup>]</div>
+        </div>
+        <div class="equation-block">
+          <div class="eq-label">Landauer's Principle</div>
+          <div class="eq-math">E = k<sub>B</sub> T ln 2</div>
+          <div class="eq-note">Minimum energy to erase one bit at temperature T &bull; Experimentally confirmed</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Dimensionally consistent &bull; Units: [J] = [J/K] &middot; [K]</div>
+        </div>
+        <p style="font-size:.82rem;color:var(--text-dim);margin-top:10px;">Shade to reveal: Planck units derivation, Stern-Gerlach experiment details, black hole entropy</p>
+      </div>
+
+      <!-- Math Pane -->
+      <div class="layer-pane" id="pane-math">
+        <div class="equation-block">
+          <div class="eq-label">Shannon Entropy</div>
+          <div class="eq-math">H = &minus;&sum; p<sub>i</sub> log<sub>2</sub> p<sub>i</sub></div>
+          <div class="eq-note">Information entropy measured in bits &bull; Foundation of information theory</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Valid &bull; Units: [bits]</div>
+        </div>
+        <div class="equation-block">
+          <div class="eq-label">Boolean Universality</div>
+          <div class="eq-math">Bit &rarr; NAND universal gate</div>
+          <div class="eq-note">Any Boolean function can be constructed from NAND gates operating on bits</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Proven (computational universality)</div>
+        </div>
+      </div>
+
+      <!-- Combined Pane -->
+      <div class="layer-pane" id="pane-combined">
+        <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">All equations from D1.2 extracted and cross-checked:</p>
+        <div class="equation-block">
+          <div class="eq-label">Bekenstein</div>
+          <div class="eq-math">N &le; A / (4 l<sub>P</sub><sup>2</sup> ln 2)</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Dims OK &bull; &#10003; No conflicts</div>
+        </div>
+        <div class="equation-block">
+          <div class="eq-label">Landauer</div>
+          <div class="eq-math">E = k<sub>B</sub> T ln 2</div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Dims OK &bull; &#10003; No conflicts</div>
+        </div>
+        <div class="equation-block">
+          <div class="eq-label">Shannon</div>
+          <div class="eq-math">H = &minus;&sum; p<sub>i</sub> log<sub>2</sub> p<sub>i</sub></div>
+          <div class="eq-status" style="color:var(--green);">&#10003; Dims OK &bull; &#10003; No conflicts</div>
+        </div>
+        <p style="margin-top:12px;font-size:.82rem;color:var(--green);">Cross-vault consistency: 0 conflicts found across 188 chain positions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Objections ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#128736;</span>
+      <h2>Objections</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <div class="objection-item">
+        <div class="objection-header" onclick="toggleObjection(this)">
+          <span class="obj-num">1</span>
+          <span>&ldquo;Reality is continuous, not discrete&rdquo;</span>
+          <span class="toggle-arrow">&#9654;</span>
+        </div>
+        <div class="objection-body">
+          <div class="resp-label">Response:</div>
+          <p>Bekenstein bound proves finite bits per region; real numbers are approximations of discrete substrates. Planck scale sets minimum distinguishable length.</p>
+          <div class="ai-suggest">AI1 Suggest: Cite Planck length l<sub>P</sub> = 1.616&times;10<sup>-35</sup> m as natural discretization threshold</div>
+        </div>
+      </div>
+      <div class="objection-item">
+        <div class="objection-header" onclick="toggleObjection(this)">
+          <span class="obj-num">2</span>
+          <span>&ldquo;Nats are more natural than bits (base e vs base 2)&rdquo;</span>
+          <span class="toggle-arrow">&#9654;</span>
+        </div>
+        <div class="objection-body">
+          <div class="resp-label">Response:</div>
+          <p>Bit is the minimal distinction (two states). Nats use continuous e-base which presupposes reals. Bits are operationally primary&mdash;every measurement resolves a binary question.</p>
+          <div class="ai-suggest">AI1 Suggest: Reference Wheeler&rsquo;s &ldquo;it from bit&rdquo; &mdash; physical existence arises from binary yes/no</div>
+        </div>
+      </div>
+      <div class="objection-item">
+        <div class="objection-header" onclick="toggleObjection(this)">
+          <span class="obj-num">3</span>
+          <span>&ldquo;Qubits supersede classical bits&rdquo;</span>
+          <span class="toggle-arrow">&#9654;</span>
+        </div>
+        <div class="objection-body">
+          <div class="resp-label">Response:</div>
+          <p>Qubits are measured in bits upon observation (Born rule). Superposition collapses to binary outcomes. The bit remains the unit of extracted information.</p>
+          <div class="ai-suggest">AI1 Suggest: Holevo bound &mdash; n qubits carry at most n classical bits of accessible information</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Analytics ===== -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-icon">&#128202;</span>
+      <h2>Analytics (L3 AI3)</h2>
+      <span class="section-toggle open">&#9654;</span>
+    </div>
+    <div class="section-body">
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="a-value" style="color:var(--green);">0</div>
+          <div class="a-label">Contradictions</div>
+        </div>
+        <div class="analytics-card">
+          <div class="a-value" style="color:var(--accent);">7/10</div>
+          <div class="a-label">Bridge Score</div>
+        </div>
+        <div class="analytics-card">
+          <div class="a-value" style="color:var(--purple);">Critical</div>
+          <div class="a-label">CR Rating</div>
+        </div>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:8px;">Co-occurrence Analysis:</p>
+      <ul class="co-occurrence-list">
+        <li>
+          <span style="min-width:90px;">Distinction</span>
+          <div class="co-bar-wrap"><div class="co-bar" style="width:85%;background:var(--accent);"></div></div>
+          <span class="co-pct">85%</span>
+        </li>
+        <li>
+          <span style="min-width:90px;">It-From-Bit</span>
+          <div class="co-bar-wrap"><div class="co-bar" style="width:42%;background:var(--purple);"></div></div>
+          <span class="co-pct">42%</span>
+        </li>
+        <li>
+          <span style="min-width:90px;">Holographic</span>
+          <div class="co-bar-wrap"><div class="co-bar" style="width:38%;background:var(--cyan);"></div></div>
+          <span class="co-pct">38%</span>
+        </li>
+        <li>
+          <span style="min-width:90px;">Shannon</span>
+          <div class="co-bar-wrap"><div class="co-bar" style="width:67%;background:var(--green);"></div></div>
+          <span class="co-pct">67%</span>
+        </li>
+      </ul>
+
+      <p style="margin-top:12px;font-size:.82rem;color:var(--text-dim);">Nav: A1.2 &rarr; <strong style="color:var(--accent);">D1.2</strong> &rarr; LN1.1 &bull; Source: Theophysics Spine XLSX</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ===== WHAT I WOULD DO DIFFERENTLY ===== -->
+  <!-- ============================================================ -->
+  <div class="diff-section">
+    <h2>What I Would Do Differently &amp; Why</h2>
+    <p style="font-size:.88rem;color:var(--text-dim);margin-bottom:18px;">
+      Your original content is the backbone here&mdash;the spine structure, domain mappings, defeat conditions,
+      and layered physics/math are all preserved above exactly as you specified. Below is what I'd change
+      in the <em>engineering and presentation</em> if I were building this into the Electron app for real.
+    </p>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">1</span> Separate equations from prose using a typed schema</h3>
+      <div class="yours"><strong>Your approach:</strong> LaTeX inline in Markdown sections, mixed with narrative text. Grok suggested remark plugin parsing of <code>## Math Layer</code> headers.</div>
+      <div class="mine"><strong>What I'd do:</strong> Store equations as structured objects in the database, not parsed out of Markdown after the fact. Each equation gets an ID, a LaTeX source string, a dimensional signature (e.g. <code>[M L^2 T^-2]</code>), and a list of which axiom IDs reference it. The Markdown note references equations by ID (<code>{{eq:bekenstein}}</code>) and the renderer pulls them from the DB. This means the math simulator doesn't need to parse Markdown at all&mdash;it queries the equation table directly. Parsing LaTeX out of prose with regex is fragile and will break when someone writes inline math in a paragraph.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">2</span> Dimensional analysis at write-time, not as a batch simulation</h3>
+      <div class="yours"><strong>Your approach:</strong> A "Simulate" button runs a vault-wide extraction + Pint.js/sympy-wasm check after the fact.</div>
+      <div class="mine"><strong>What I'd do:</strong> Run dimensional checks <em>as you type</em>, the same way a linter underlines errors in VS Code. When you add or edit an equation in the editor, the app immediately checks units against the dimensional signature you declared and shows inline red/green status. The batch "simulate all" button is still useful for vault-wide sweeps, but the primary feedback loop should be instant. Waiting for a user to remember to click "Simulate" means errors accumulate. A write-time check catches them one at a time when context is fresh.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">3</span> Bridge Score should be computed, not hand-entered</h3>
+      <div class="yours"><strong>Your approach:</strong> "Bridge Count: 7/10 (Auto-validated)" appears in the template, but the number comes from manually counting table rows with a green status.</div>
+      <div class="mine"><strong>What I'd do:</strong> The bridge score is a <code>COUNT(WHERE status = 'grounded' OR status = 'scripture')</code> query against the mappings table for this axiom. It updates automatically when you add or remove a mapping. The denominator (10) should be the total number of defined domains in the system, not a hardcoded constant. If you add a new domain (say "Biology"), the denominator becomes 11 and the score recalculates. Hardcoded denominators silently become wrong when the system grows.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">4</span> Replace emojis with a proper icon system</h3>
+      <div class="yours"><strong>Your approach:</strong> Unicode emojis throughout&mdash;&#9883; for physics, &#10013; for theology, &#129504; for consciousness, etc.</div>
+      <div class="mine"><strong>What I'd do:</strong> Use an SVG icon set (Lucide, Phosphor, or custom) with consistent sizing, color theming, and accessibility labels. Emojis render differently across platforms (macOS vs Windows vs Linux), can't be styled with CSS color, and some (like &#9883;) are ambiguous. A proper icon system means the physics icon is always the same 16&times;16 glyph in your accent color, and screen readers announce "Physics" instead of "atom symbol." This is an Electron app shipping cross-platform&mdash;emoji inconsistency is a real problem.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">5</span> Objections should be version-tracked, not just listed</h3>
+      <div class="yours"><strong>Your approach:</strong> Static list of objections with canned responses. AI suggests citations.</div>
+      <div class="mine"><strong>What I'd do:</strong> Each objection is a first-class object with a creation date, a response history (who responded, when, what changed), and a status field (open / rebutted / conceded / superseded). If you revise a response based on new physics, the old response stays in the history. This matters because theophysics is a living argument. When you're at chain position 150 and someone revisits objection #1 on D1.2, you need to see <em>why</em> you said what you said at the time, and whether later axioms strengthened or weakened the rebuttal. A flat list loses that trail.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">6</span> The "Assumes" graph should be a DAG, enforced</h3>
+      <div class="yours"><strong>Your approach:</strong> Linear list of prerequisite axiom links. Grok suggests "auto-links Enables."</div>
+      <div class="mine"><strong>What I'd do:</strong> Model the full dependency graph as a directed acyclic graph (DAG) in the database. On every edit, run a topological sort to verify no cycles exist. If D1.2 assumes A1.3 and A1.3 somehow ends up assuming D1.2 (even indirectly through 5 hops), the app refuses the link and shows the cycle path. For 188 chain positions, circular dependencies <em>will</em> happen by accident. A linear list can't detect transitive cycles. The app should also visualize the subgraph: for any node, show its upstream (assumes) and downstream (enables) as an interactive DAG diagram, not just flat lists.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">7</span> Don't use sympy-wasm for the equation engine</h3>
+      <div class="yours"><strong>Your approach:</strong> Grok recommended sympy-wasm (WebAssembly port of Python's SymPy) for symbolic math in-browser.</div>
+      <div class="mine"><strong>What I'd do:</strong> Use <a href="https://mathjs.org" style="color:var(--accent);">math.js</a> for the symbolic engine. It's native JavaScript, actively maintained, has built-in unit support, symbolic simplification, and runs without a 15+ MB WASM binary. sympy-wasm is a transpiled Python library&mdash;it's slow to initialize, large to bundle, poorly documented for JS interop, and debugging crosses a language boundary. Since this is an Electron app, you could also use a Node child process running a small Python script with actual SymPy if you need heavy symbolic computation, which would be faster and more reliable than the WASM port. But for dimensional analysis and equation comparison, math.js handles it natively.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">8</span> Structure validation should be a schema, not a checklist</h3>
+      <div class="yours"><strong>Your approach:</strong> "Schema validates min Assumes=3, Bridges=7; auto-links Enables." Grok frames it as validation rules.</div>
+      <div class="mine"><strong>What I'd do:</strong> Define a JSON Schema (or Zod schema in TypeScript) for each object type (Axiom, Definition, Lemma, Theorem, Corollary). The schema specifies required fields, their types, and constraints. For example, a Definition requires: <code>formal_statement</code> (string, non-empty), <code>assumes</code> (array, min length 1), <code>defeat_conditions</code> (array, min length 1), <code>spine_mappings</code> (array of objects with domain/mapping/status). Validation runs on save, and the editor shows exactly which fields are missing or invalid. "Min Assumes=3" is an arbitrary number that might not apply to all object types. A schema per type is more precise and extensible.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">9</span> The "AI Suggest" layer needs guardrails and provenance</h3>
+      <div class="yours"><strong>Your approach:</strong> AI suggestions appear inline (e.g., "AI Suggest: Binary percept?" for consciousness mapping). Grok describes L3 AI layers that auto-fill and suggest.</div>
+      <div class="mine"><strong>What I'd do:</strong> Every AI suggestion should be tagged with: (a) which model generated it, (b) what prompt produced it, (c) a confidence score, and (d) a user accept/reject/edit action log. Suggestions should appear in a visually distinct "suggestion tray" below the field, not inline with human-authored content. Once accepted, the suggestion becomes regular content with an "[AI-originated]" provenance tag in the history. This matters because in a 188-position theological-physics argument, you need to know which claims came from a human author and which were machine-suggested. Mixing them invisibly undermines the epistemic integrity of the spine.</div>
+    </div>
+
+    <div class="diff-item">
+      <h3><span class="diff-num">10</span> Export should produce structured formats, not just PDF</h3>
+      <div class="yours"><strong>Your approach:</strong> PDF export button. Grok mentions "prettier dashboard."</div>
+      <div class="mine"><strong>What I'd do:</strong> Support multiple export targets: (a) PDF via a proper typesetting pipeline (Markdown &rarr; LaTeX &rarr; PDF, not HTML &rarr; PDF which loses math quality), (b) LaTeX source for academic submission, (c) JSON-LD for machine-readable structured data, (d) a static HTML site (like this demo) for sharing. The PDF should use a real LaTeX renderer for the equations so they look publication-grade, not browser-rendered HTML math. If this work is heading toward academic papers or books, the export pipeline matters as much as the editing experience.</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:30px 0 60px;font-size:.8rem;color:var(--text-dim);">
+    <a href="#" style="color:var(--accent);text-decoration:none;">&larr; Master Index</a>
+    &nbsp;&bull;&nbsp; Theophysics Note Engine &nbsp;&bull;&nbsp; Template: D1.2 Bit Definition
+  </div>
+</main>
+
+<!-- ============ RIGHT SIDEBAR ============ -->
+<aside class="sidebar-right">
+  <h4>Note Metadata</h4>
+  <div class="meta-row"><span class="label">Chain #</span><span class="value">5 of 188</span></div>
+  <div class="meta-row"><span class="label">Object</span><span class="value">Axiom</span></div>
+  <div class="meta-row"><span class="label">Stage</span><span class="value">Definition 1</span></div>
+  <div class="meta-row"><span class="label">CR</span><span class="value" style="color:var(--red);">Critical</span></div>
+  <div class="meta-row"><span class="label">Bridge</span><span class="value" style="color:var(--green);">7/10</span></div>
+  <div class="meta-row"><span class="label">Conflicts</span><span class="value" style="color:var(--green);">0</span></div>
+
+  <h4>Tags</h4>
+  <div>
+    <span class="tag tag-blue">information-theory</span>
+    <span class="tag tag-purple">axiom</span>
+    <span class="tag tag-green">validated</span>
+    <span class="tag tag-orange">physics</span>
+    <span class="tag tag-blue">theology</span>
+  </div>
+
+  <h4>Dependency Graph</h4>
+  <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;font-family:var(--font-mono);font-size:.75rem;line-height:2;">
+    <div style="color:var(--text-dim);">A1.1 Existence</div>
+    <div style="color:var(--text-dim);">&nbsp;&nbsp;&darr;</div>
+    <div style="color:var(--text-dim);">A1.2 Distinction</div>
+    <div style="color:var(--text-dim);">&nbsp;&nbsp;&darr;</div>
+    <div style="color:var(--text-dim);">A1.3 Info Primacy</div>
+    <div style="color:var(--text-dim);">&nbsp;&nbsp;&darr;</div>
+    <div style="color:var(--accent);font-weight:700;">D1.2 Bit Definition &larr; you are here</div>
+    <div style="color:var(--text-dim);">&nbsp;&nbsp;&darr;</div>
+    <div style="color:var(--text-dim);">LN1.1 Matter-Energy</div>
+    <div style="color:var(--text-dim);">&nbsp;&nbsp;&darr;</div>
+    <div style="color:var(--text-dim);">LN1.2 It-From-Bit</div>
+  </div>
+
+  <h4>Bridge Strength</h4>
+  <div class="mini-graph">
+    <div class="bar" style="height:90%;background:var(--green);" title="Physics"></div>
+    <div class="bar" style="height:80%;background:var(--purple);" title="Theology"></div>
+    <div class="bar" style="height:30%;background:var(--yellow);" title="Consciousness"></div>
+    <div class="bar" style="height:85%;background:var(--cyan);" title="Quantum"></div>
+    <div class="bar" style="height:80%;background:var(--purple);" title="Scripture"></div>
+    <div class="bar" style="height:75%;background:var(--accent);" title="Evidence"></div>
+    <div class="bar" style="height:95%;background:var(--green);" title="Information"></div>
+  </div>
+  <div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;display:flex;justify-content:space-between;">
+    <span>Phys</span><span>Theo</span><span>Con</span><span>QM</span><span>Scr</span><span>Evd</span><span>Info</span>
+  </div>
+
+  <h4>Quick Actions</h4>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button class="action-btn" style="font-size:.78rem;width:100%;justify-content:center;" onclick="openModal('sim')">Run Math Sim</button>
+    <button class="action-btn" style="font-size:.78rem;width:100%;justify-content:center;">Edit in Markdown</button>
+    <button class="action-btn" style="font-size:.78rem;width:100%;justify-content:center;">View Raw JSON</button>
+  </div>
+</aside>
+
+<!-- ============ MODALS ============ -->
+<!-- Math Simulator Modal -->
+<div class="modal-overlay" id="modal-sim">
+  <div class="modal">
+    <h3>
+      &#9881; Math Layer Extractor &amp; Simulator
+      <button class="modal-close" onclick="closeModal('sim')">&times;</button>
+    </h3>
+    <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">
+      Extracted 3 equations from D1.2. Running dimensional analysis, symbolic verification, and cross-vault conflict detection.
+    </p>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span class="r-eq">N &le; A / (4 l<sub>P</sub><sup>2</sup> ln 2)</span>
+      <span class="r-check" style="color:var(--green);">Dims: [bits] = [L<sup>2</sup>]/[L<sup>2</sup>] &#10003;</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span class="r-eq">E = k<sub>B</sub> T ln 2</span>
+      <span class="r-check" style="color:var(--green);">Dims: [J] = [J/K]&middot;[K] &#10003;</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span class="r-eq">H = &minus;&sum; p log<sub>2</sub> p</span>
+      <span class="r-check" style="color:var(--green);">Dims: [bits] (dimensionless) &#10003;</span>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+      <p style="font-size:.82rem;color:var(--green);font-weight:600;">Simulation Results:</p>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-top:6px;">
+        Plugging Planck values: l<sub>P</sub> = 1.616&times;10<sup>-35</sup> m, observable universe area A &asymp; 4&pi;(4.4&times;10<sup>26</sup>)<sup>2</sup> m<sup>2</sup>
+      </p>
+      <p style="font-size:.82rem;color:var(--cyan);margin-top:4px;font-family:var(--font-mono);">
+        N<sub>max</sub> &asymp; 2.6 &times; 10<sup>122</sup> bits
+      </p>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-top:4px;">
+        Landauer minimum at T=2.7K (CMB): E<sub>min</sub> &asymp; 2.58 &times; 10<sup>-23</sup> J per bit erasure
+      </p>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:rgba(63,185,80,.06);border-radius:var(--radius);border:1px solid rgba(63,185,80,.2);">
+      <p style="font-size:.82rem;color:var(--green);font-weight:600;">Cross-Vault Scan: 0 conflicts</p>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-top:4px;">
+        Scanned 188 chain positions. No dimensional mismatches. No contradictory bounds. All equations mutually consistent.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Structure Checker Modal -->
+<div class="modal-overlay" id="modal-struct">
+  <div class="modal">
+    <h3>
+      &#9745; Structure Validation Report
+      <button class="modal-close" onclick="closeModal('struct')">&times;</button>
+    </h3>
+    <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">
+      Validating D1.2 against Axiom schema (required fields, dependency integrity, mapping completeness).
+    </p>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Formal statement present &amp; non-empty</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Assumes: 3 dependencies (min 1 required)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">All assumed axioms exist in vault (A1.1, A1.2, A1.3)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">No circular dependencies detected (DAG check passed)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Defeat conditions: 3 listed (min 1 required)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Spine mappings: 7 of 10 domains mapped</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--yellow);">&#9888;</span>
+      <span style="flex:1;color:var(--yellow);">3 unmapped domains: Biology, Philosophy, Mathematics (formal)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Forward links: 6 (auto-verified targets exist)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Physics layer equations: 2 (dimensionally checked)</span>
+    </div>
+    <div class="result-row">
+      <span class="r-status" style="color:var(--green);">&#10003;</span>
+      <span style="flex:1;">Math layer equations: 2 (symbolically valid)</span>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:rgba(63,185,80,.06);border-radius:var(--radius);border:1px solid rgba(63,185,80,.2);">
+      <p style="font-size:.82rem;color:var(--green);font-weight:600;">Result: 9/10 checks passed, 1 warning</p>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-top:4px;">
+        Note is structurally valid. Consider mapping remaining 3 domains for full bridge coverage.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal">
+    <h3>
+      &#128196; Export Options
+      <button class="modal-close" onclick="closeModal('export')">&times;</button>
+    </h3>
+    <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">
+      Choose an export format for D1.2 Bit Definition:
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="link-card" style="text-align:center;padding:20px;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">&#128196;</div>
+        <div style="font-weight:600;margin-bottom:4px;">PDF (LaTeX)</div>
+        <div style="font-size:.78rem;color:var(--text-dim);">Publication-grade via MD &rarr; LaTeX &rarr; PDF pipeline</div>
+      </div>
+      <div class="link-card" style="text-align:center;padding:20px;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">&#128209;</div>
+        <div style="font-weight:600;margin-bottom:4px;">LaTeX Source</div>
+        <div style="font-size:.78rem;color:var(--text-dim);">Raw .tex file for academic submission</div>
+      </div>
+      <div class="link-card" style="text-align:center;padding:20px;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">&#128187;</div>
+        <div style="font-weight:600;margin-bottom:4px;">JSON-LD</div>
+        <div style="font-size:.78rem;color:var(--text-dim);">Machine-readable structured data</div>
+      </div>
+      <div class="link-card" style="text-align:center;padding:20px;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">&#127760;</div>
+        <div style="font-weight:600;margin-bottom:4px;">Static HTML</div>
+        <div style="font-size:.78rem;color:var(--text-dim);">Shareable single-page site (like this demo)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toggle collapsible sections
+  function toggleSection(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.section-toggle');
+    if (body.classList.contains('collapsed')) {
+      body.classList.remove('collapsed');
+      if (arrow) arrow.classList.add('open');
+    } else {
+      body.classList.add('collapsed');
+      if (arrow) arrow.classList.remove('open');
+    }
+  }
+
+  // Toggle objection expand/collapse
+  function toggleObjection(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.toggle-arrow');
+    if (body.classList.contains('open')) {
+      body.classList.remove('open');
+      if (arrow) arrow.classList.remove('open');
+    } else {
+      body.classList.add('open');
+      if (arrow) arrow.classList.add('open');
+    }
+  }
+
+  // Switch physics/math/combined tabs
+  function switchTab(tab, paneId) {
+    document.querySelectorAll('.layer-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.layer-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-' + paneId).classList.add('active');
+  }
+
+  // Modal open/close
+  function openModal(id) {
+    document.getElementById('modal-' + id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById('modal-' + id).classList.remove('open');
+  }
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>

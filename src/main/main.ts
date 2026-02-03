@@ -9,7 +9,8 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import fs from 'fs';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -29,6 +30,41 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.on('export-html', async (event, files: { name: string; content: string }[]) => {
+  try {
+    const result = await dialog.showOpenDialog({
+      title: 'Select export folder',
+      properties: ['openDirectory', 'createDirectory'],
+      buttonLabel: 'Export Here',
+    });
+
+    if (result.canceled || !result.filePaths.length) {
+      event.reply('export-html-result', { success: false, reason: 'cancelled' });
+      return;
+    }
+
+    const outDir = result.filePaths[0];
+    let written = 0;
+
+    for (const file of files) {
+      const filePath = path.join(outDir, file.name);
+      fs.writeFileSync(filePath, file.content, 'utf-8');
+      written += 1;
+    }
+
+    event.reply('export-html-result', {
+      success: true,
+      dir: outDir,
+      count: written,
+    });
+
+    shell.openPath(outDir);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    event.reply('export-html-result', { success: false, reason: message });
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -71,8 +107,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    width: 1440,
+    height: 900,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
