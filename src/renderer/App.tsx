@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import './App.css';
+import { generateHtml, generateIndex } from './htmlExport';
+import { getAllPositions } from './data';
 
 type ModalId = 'sim' | 'struct' | 'export' | null;
 type TabId = 'physics' | 'math' | 'combined';
@@ -31,6 +33,36 @@ export default function App() {
   }, []);
 
   const isOpen = (id: string) => !collapsedSections.has(id);
+
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
+
+  const handleExportHtml = useCallback(() => {
+    const positions = getAllPositions();
+    const files: { name: string; content: string }[] = [];
+
+    for (const pos of positions) {
+      const filename = `${pos.ref.replace(/\./g, '_')}.html`;
+      files.push({ name: filename, content: generateHtml(pos, positions) });
+    }
+
+    files.push({ name: 'index.html', content: generateIndex(positions) });
+
+    setExportStatus('Exporting...');
+
+    window.electron?.ipcRenderer.sendMessage('export-html', files);
+    window.electron?.ipcRenderer.once('export-html-result', (result: unknown) => {
+      const r = result as { success: boolean; dir?: string; count?: number; reason?: string };
+      if (r.success) {
+        setExportStatus(`Exported ${r.count} files to ${r.dir}`);
+        setTimeout(() => setExportStatus(null), 5000);
+      } else if (r.reason === 'cancelled') {
+        setExportStatus(null);
+      } else {
+        setExportStatus(`Export failed: ${r.reason}`);
+        setTimeout(() => setExportStatus(null), 5000);
+      }
+    });
+  }, []);
 
   return (
     <>
@@ -1032,38 +1064,41 @@ export default function App() {
             Choose an export format for D1.2 Bit Definition:
           </p>
           <div className="export-grid">
-            {[
-              {
-                icon: '&#128196;',
-                title: 'PDF (LaTeX)',
-                desc: 'Publication-grade via MD \u2192 LaTeX \u2192 PDF pipeline',
-              },
-              {
-                icon: '&#128209;',
-                title: 'LaTeX Source',
-                desc: 'Raw .tex file for academic submission',
-              },
-              {
-                icon: '&#128187;',
-                title: 'JSON-LD',
-                desc: 'Machine-readable structured data',
-              },
-              {
-                icon: '&#127760;',
-                title: 'Static HTML',
-                desc: 'Shareable single-page site (like this demo)',
-              },
-            ].map((item) => (
-              <div className="link-card export-card" key={item.title}>
-                <div
-                  className="icon"
-                  dangerouslySetInnerHTML={{ __html: item.icon }}
-                />
-                <div className="title">{item.title}</div>
-                <div className="desc">{item.desc}</div>
+            <div className="link-card export-card" style={{ opacity: 0.5 }}>
+              <div className="icon">&#128196;</div>
+              <div className="title">PDF (LaTeX)</div>
+              <div className="desc">Coming soon</div>
+            </div>
+            <div className="link-card export-card" style={{ opacity: 0.5 }}>
+              <div className="icon">&#128209;</div>
+              <div className="title">LaTeX Source</div>
+              <div className="desc">Coming soon</div>
+            </div>
+            <div className="link-card export-card" style={{ opacity: 0.5 }}>
+              <div className="icon">&#128187;</div>
+              <div className="title">JSON-LD</div>
+              <div className="desc">Coming soon</div>
+            </div>
+            <div
+              className="link-card export-card"
+              onClick={handleExportHtml}
+              style={{ borderColor: 'var(--green)' }}
+            >
+              <div className="icon">&#127760;</div>
+              <div className="title" style={{ color: 'var(--green)' }}>
+                Static HTML
               </div>
-            ))}
+              <div className="desc">
+                Export all {getAllPositions().length} pages as self-contained
+                HTML with full interactivity
+              </div>
+            </div>
           </div>
+          {exportStatus && (
+            <p className="text-green mt-14" style={{ fontSize: '.85rem' }}>
+              {exportStatus}
+            </p>
+          )}
         </div>
       </div>
     </>
